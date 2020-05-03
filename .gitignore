@@ -2,3 +2,4 @@ venv
 API_KEY.txt
 data.json
 .ipynb_checkpoints
+curated.json
