@@ -11,36 +11,45 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 
-TOP250 = "https://www.imdb.com/search/title/?groups=top_250&sort=user_rating"
-TOP250_2 = "https://www.imdb.com/search/title/?groups=top_250&sort=user_rating,desc&start=51&ref_=adv_nxt"
+BASE_URL = "https://www.imdb.com/search/title/?groups=top_250&sort=user_rating"
+next_page_url = ",desc&start="
+next_page_url_ = "&ref_=adv_nxt"
 
-def fetch_():
-    with requests.get(TOP250) as r:
-        if r.status_code < 400:
+def fetch_list():
+    titles = []
+    for page_number in range(51, 252, 50):
+        url = f"{BASE_URL}{next_page_url}{page_number}{next_page_url_}"
+        with requests.get(url) as r:
             soup = BeautifulSoup(r.content, "lxml")
             try:
                 item_pane = soup.find_all("div", class_="lister-item-content")
-                titles = []
                 for item in item_pane:
                     titles.extend(item.find("a"))
-                return sample(titles, k=1)
             except Exception:
                 print("BAD ELEMENT IN SOUP")
+    return titles
+
+def suggest_film(titles):
+    return sample(titles, k=1)[0]
 
 class SuggestionLayout(BoxLayout):
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(SuggestionLayout, self).__init__(**kwargs)
+        self.titles = titles
         self.button = Button(text="Pick new suggestion", on_press=self.update_title, always_release=True)
+        self.button.font_size = "25dp"
         self.label = Label(text="Film Suggestion")
-        self.add_widget(self.button)
+        self.label.font_size = "25dp"
         self.add_widget(self.label)
+        self.add_widget(self.button)
 
     def update_title(self, event):
-        self.label.text = fetch_()[0]
+        self.label.text = suggest_film(self.titles)
 
 class SuggestionApp(App):
     def build(self):
-        return SuggestionLayout(orientation="vertical")
+        return SuggestionLayout(titles, orientation="vertical")
 
 if __name__ == "__main__":
+    titles = fetch_list()
     SuggestionApp().run()
