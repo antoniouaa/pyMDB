@@ -17,7 +17,7 @@ next_page_url_ = "&ref_=adv_nxt"
 
 def fetch_list():
     films = {}
-    for page_number in range(51, 252, 50):
+    for page_number in range(0, 252, 50):
         url = f"{BASE_URL}{next_page_url}{page_number}{next_page_url_}"
         with requests.get(url) as r:
             soup = BeautifulSoup(r.content, "lxml")
@@ -39,7 +39,11 @@ class SuggestionLayout(BoxLayout):
     def __init__(self, *args, **kwargs):
         super(SuggestionLayout, self).__init__(**kwargs)
         self.films = films
-        self.button = Button(text="Pick new suggestion", on_press=self.update_title, always_release=True)
+        self.button = Button(text="Pick new suggestion", 
+            on_press=self.update_title, 
+            always_release=True,
+            size=[800, 150],
+            size_hint=[None, None])   
         self.button.font_size = "25dp"
         self.label = Label(text="Film Suggestion", 
             markup=True,
