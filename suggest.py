@@ -16,7 +16,7 @@ next_page_url = ",desc&start="
 next_page_url_ = "&ref_=adv_nxt"
 
 def fetch_list():
-    titles = []
+    films = {}
     for page_number in range(51, 252, 50):
         url = f"{BASE_URL}{next_page_url}{page_number}{next_page_url_}"
         with requests.get(url) as r:
@@ -24,32 +24,40 @@ def fetch_list():
             try:
                 item_pane = soup.find_all("div", class_="lister-item-content")
                 for item in item_pane:
-                    titles.extend(item.find("a"))
+                    film_title = item.find("a").text
+                    film_desc = item.find_all("p", class_="text-muted")[-1].text.strip()
+                    films[film_title] = film_desc
             except Exception:
                 print("BAD ELEMENT IN SOUP")
-    return titles
+    return films
 
-def suggest_film(titles):
-    return sample(titles, k=1)[0]
+def suggest_film(films):
+    title = sample(list(films), k=1)[0]
+    return title, films[title]
 
 class SuggestionLayout(BoxLayout):
     def __init__(self, *args, **kwargs):
         super(SuggestionLayout, self).__init__(**kwargs)
-        self.titles = titles
+        self.films = films
         self.button = Button(text="Pick new suggestion", on_press=self.update_title, always_release=True)
         self.button.font_size = "25dp"
-        self.label = Label(text="Film Suggestion")
+        self.label = Label(text="Film Suggestion", 
+            markup=True,
+            halign="center", 
+            valign="center", 
+            text_size=[400, 400])
         self.label.font_size = "25dp"
         self.add_widget(self.label)
         self.add_widget(self.button)
 
     def update_title(self, event):
-        self.label.text = suggest_film(self.titles)
+        title, desc = suggest_film(self.films)
+        self.label.text = f"[b]{title}[/b]\n\n{desc}"
 
 class SuggestionApp(App):
     def build(self):
-        return SuggestionLayout(titles, orientation="vertical")
+        return SuggestionLayout(films, orientation="vertical")
 
 if __name__ == "__main__":
-    titles = fetch_list()
+    films = fetch_list()
     SuggestionApp().run()
